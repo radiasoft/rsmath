@@ -12,4 +12,4 @@ def test_1():
     import rsmath
 
 def test_import_consts():
-    import rsmath.constants.constants
+    import rsmath.const

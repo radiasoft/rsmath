@@ -72,10 +72,9 @@ def test_lct_abscissae_and_signal():
 
     assert dus == [0.08823529411764706, 0.2, 0.16, 0.16]
 
-    data_dir = pkunit.data_dir()
-    expect_path = data_dir.join("1.out/u_and_f_vals.txt")
-    actual_path = pkio.write_text("u_and_f_vals_actual.txt", str([*all_uvals, *all_fvals]))
-    import pyndiff
+    # data_dir = pkunit.data_dir()
+    # expect_path = data_dir.join("1.out/u_and_f_vals.txt")
+    # actual_path = pkio.write_text("u_and_f_vals_actual.txt", str([*all_uvals, *all_fvals]))
 
     # from pykern import pksubprocess
 

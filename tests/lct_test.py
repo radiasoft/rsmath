@@ -72,11 +72,22 @@ def test_lct_abscissae_and_signal():
 
     assert dus == [0.08823529411764706, 0.2, 0.16, 0.16]
 
-    for d in pkunit.case_dirs(group_prefix="1"):
-        pkio.write_text(d.join("u_and_f_vals.txt"),
-            str([*all_uvals, *all_fvals]
-            )
-        )
+    data_dir = pkunit.data_dir()
+    expect_path = data_dir.join("1.out/u_and_f_vals.txt")
+    actual_path = pkio.write_text("u_and_f_vals_actual.txt", str([*all_uvals, *all_fvals]))
+    import pyndiff
+
+    # from pykern import pksubprocess
+
+    # pksubprocess.check_call_with_signals([
+    #     "ndiff", "--relative-error", "6.0e-51", expect_path, actual_path,
+    # ])
+
+    # for d in pkunit.case_dirs(group_prefix="1"):
+    #     pkio.write_text(d.join("u_and_f_vals.txt"),
+    #         str([*all_uvals, *all_fvals]
+    #         )
+    #     )
 
     assert list(lct_lib.lct_abscissae(8, 0.25)) == [-1.  , -0.75, -0.5 , -0.25,  0.  ,  0.25,  0.5 ,  0.75]
     assert list(lct_lib.lct_abscissae(7, 0.25)) == [-0.75, -0.5 , -0.25,  0.  ,  0.25,  0.5 ,  0.75]
@@ -85,9 +96,11 @@ def test_lct_abscissae_and_signal():
     assert [round(x, 1) for x in list(lct_lib.lct_abscissae(20, 3 / (20 // 2)))] == [-3. , -2.7, -2.4, -2.1, -1.8, -1.5, -1.2, -0.9, -0.6, -0.3,  0. , 0.3,  0.6,  0.9,  1.2,  1.5,  1.8,  2.1,  2.4,  2.7]
     assert [round(x, 1) for x in list(lct_lib.lct_abscissae(21, 3 / (21 // 2)))] == [-3. , -2.7, -2.4, -2.1, -1.8, -1.5, -1.2, -0.9, -0.6, -0.3,  0. , 0.3,  0.6,  0.9,  1.2,  1.5,  1.8,  2.1,  2.4,  2.7,  3. ]
 
+
+
     k_rsmp = 2.0
     signals = list(zip(dus, all_fvals))
     rsmps = [lct_lib.resample_signal(k_rsmp, sig) for sig in signals]
 
-    for d in pkunit.case_dirs(group_prefix="2"):
-        pkio.write_text(d.join("signals.txt"), str(rsmps))
+    # for d in pkunit.case_dirs(group_prefix="2"):
+    #     pkio.write_text(d.join("signals.txt"), str(rsmps))

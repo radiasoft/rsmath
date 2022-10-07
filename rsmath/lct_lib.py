@@ -1,94 +1,11 @@
+# -*- coding: utf-8 -*-
+u"""Functions for Linear Canonical Transforms
+
+:copyright: Copyright (c) 2019 RadiaSoft LLC.  All Rights Reserved.
+:license: http://www.apache.org/licenses/LICENSE-2.0.html
+"""
 import numpy as np
 
-gr = (1 + np.sqrt(5)) / 2
-d2r = np.pi / 180.
-r2d = 1 / d2r
-
-
-def minmax(arr):
-    """
-    Compute and return the min and max of a given array.
-    """
-    return np.min(arr), np.max(arr)
-
-def even_ceil(x):
-    """
-    Return smallest even integer greater than or equal to x.
-    """
-    ec = int(np.ceil(x))
-    if ec % 2 != 0: ec += 1
-    return ec
-
-def odd_ceil(x):
-    """
-    Return smallest odd integer greater than or equal to x.
-    """
-    oc = int(np.ceil(x))
-    if oc % 2 == 0: oc += 1
-    return oc
-
-def round_to_even(x):
-    """
-    Return even integer closest to x.
-    """
-    return 2 * round(x / 2)
-
-def convert_params_3to4(alpha, beta, gamma):
-    """
-    Given LCT parameters (α,β,γ), return the associated 2x2 ABCD matrix.
-
-    Caveats: Not all authors use the same convention for the parameters
-    (α,β,γ): some reverse the rôles of α and γ.
-    We follow the notation of [Koç [7]](#ref:Koc-2011-thesis)
-    and [Koç, et al. [8]](#ref:Koc-2008-DCLCT),
-    also [Healy [4], ch.10](#ref:Healy:2016:LCTs).
-
-    Restrictions: The parameter beta may not take the value zero.
-
-    Arguments:
-    α, β, γ -- a parameter triplet defining a 1D LCT
-
-    Return a symplectic 2x2 ABCD martrix.
-    """
-    if beta == 0.:
-        print("The parameter beta may not take the value zero!")
-        return -1
-    M = np.zeros((2,2))
-    M[0,0] = gamma / beta
-    M[0,1] = 1. / beta
-    M[1,0] = -beta + alpha * gamma / beta
-    M[1,1] = alpha / beta
-
-    return M
-
-def convert_params_4to3(M_lct):
-    """
-    Given a symplectic 2x2 ABCD matrix, return the associated parameter triplet (α,β,γ).
-
-    Caveats: Not all authors use the same convention for the parameters
-    (α,β,γ): some reverse the rôles of α and γ.
-    We follow the notation of [Koç [7]](#ref:Koc-2011-thesis)
-    and [Koç, et al. [8]](#ref:Koc-2008-DCLCT),
-    also [Healy [4], ch.10](#ref:Healy:2016:LCTs).
-
-    Restrictions: The (1,2) matrix entry may not take the value zero.
-
- ** DTA: We need to decide how best to handle b very near zero.
-
-    Arguments:
-    M_lct -- a symplectic 2x2 ABCD martrix that defines a 1D LCT
-
-    Return the parameter triplet α, β, γ.
-    """
-    a, b, c, d = np.asarray(M_lct).flatten()
-    if b == 0.:
-        print("The (1,2) matrix entry may not take the value zero!")
-        return -1
-    beta = 1 / b
-    alpha = d / b
-    gamma = a / b
-
-    return alpha, beta, gamma
 
 def lct_abscissae(nn, du, ishift = False):
     """
@@ -289,7 +206,7 @@ def lct_decomposition(M_lct):
     where 'STR' specifies the operation, and p the parameter relevant
     for that operation.
     """
-    alpha, beta, gamma = convert_params_4to3(M_lct)
+    alpha, beta, gamma = _convert_params_4to3(M_lct)
     ag = abs(gamma)
     if ag <= 1:
         k = 1 + ag + abs(alpha) / beta ** 2 * (1 + ag) ** 2
@@ -357,45 +274,60 @@ def apply_lct(M_lct, in_signal):
     return signal1
 
 
-def apply_lct_2d_sep(MX_lct, MY_lct, in_signal):
+def _convert_params_3to4(alpha, beta, gamma):
     """
-    Apply LCT[M_lct] to a given input signal, and return the result.
+    Given LCT parameters (α,β,γ), return the associated 2x2 ABCD matrix.
 
-    Given a pair of symplectic 2x2 ABCD matrix that defines an uncoupled
-    LCT in two dimensions, decompose
-    the matrix into a sequence of simpler operations, so as to achieve
-    an operation count of ~O(N log N).
+    Caveats: Not all authors use the same convention for the parameters
+    (α,β,γ): some reverse the rôles of α and γ.
+    We follow the notation of [Koç [7]](#ref:Koc-2011-thesis)
+    and [Koç, et al. [8]](#ref:Koc-2008-DCLCT),
+    also [Healy [4], ch.10](#ref:Healy:2016:LCTs).
 
-    The algorithm implemented here is that given by Koç, et al.
-    in IEEE Trans. Signal Proc. 56(6):2383--2394, June 2008.
+    Restrictions: The parameter beta may not take the value zero.
 
     Arguments:
-    M_lct -- symplectic 2x2 matrix that describes the desired LCT
-    in_signal -- the signal to transform, [ dX, signal_array], where
-                 dX denotes the sample interval of the given signal
+    α, β, γ -- a parameter triplet defining a 1D LCT
 
-    Return the transformed signal in the form [ dY, LCT[M_lct](signal)].
+    Return a symplectic 2x2 ABCD martrix.
     """
-    seq_x = lct_decomposition(MX_lct)
-    seq_y = lct_decomposition(MY_lct)
-    signal0 = in_signal
-    for lct in seq:
-        if   lct[0] == 'CM':
-            signal1 = chirp_multiply(lct[1], signal0)
-            signal0 = signal1
-        elif lct[0] == 'LCFT':
-            signal1 = lct_fourier(signal0)
-            signal0 = signal1
-        elif lct[0] == 'SCL':
-            signal1 = scale_signal(lct[1], signal0)
-            signal0 = signal1
-        elif lct[0] == 'RSMP':
-            signal1 = resample_signal(lct[1], signal0)
-            signal0 = signal1
-        else:
-            assert False, 'LCT code ' + lct[0] + ' not recognized! Exiting now.'
-            return -1
+    if beta == 0.:
+        print("The parameter beta may not take the value zero!")
+        return -1
+    M = np.zeros((2,2))
+    M[0,0] = gamma / beta
+    M[0,1] = 1. / beta
+    M[1,0] = -beta + alpha * gamma / beta
+    M[1,1] = alpha / beta
 
-    return signal1
+    return M
 
 
+def _convert_params_4to3(M_lct):
+    """
+    Given a symplectic 2x2 ABCD matrix, return the associated parameter triplet (α,β,γ).
+
+    Caveats: Not all authors use the same convention for the parameters
+    (α,β,γ): some reverse the rôles of α and γ.
+    We follow the notation of [Koç [7]](#ref:Koc-2011-thesis)
+    and [Koç, et al. [8]](#ref:Koc-2008-DCLCT),
+    also [Healy [4], ch.10](#ref:Healy:2016:LCTs).
+
+    Restrictions: The (1,2) matrix entry may not take the value zero.
+
+ ** DTA: We need to decide how best to handle b very near zero.
+
+    Arguments:
+    M_lct -- a symplectic 2x2 ABCD martrix that defines a 1D LCT
+
+    Return the parameter triplet α, β, γ.
+    """
+    a, b, c, d = np.asarray(M_lct).flatten()
+    if b == 0.:
+        print("The (1,2) matrix entry may not take the value zero!")
+        return -1
+    beta = 1 / b
+    alpha = d / b
+    gamma = a / b
+
+    return alpha, beta, gamma

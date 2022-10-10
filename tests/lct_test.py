@@ -7,6 +7,9 @@ import numpy as np
 import re
 
 
+_K_RSMP = 2.0
+_M_SCL = -2
+
 def test_lct_signal():
     data_dir = pkunit.data_dir()
     work_dir = pkunit.empty_work_dir()
@@ -59,6 +62,10 @@ def test_lct_signal():
         ][fn_idx](uvals)
         return du, uvals, fvals
 
+    # def _cast_flt(sig):
+    #     # sig[1] = [float(s) for s in sig[1]]
+    #     return sig
+
     dus = []
     all_fvals = []
     all_uvals = []
@@ -68,22 +75,26 @@ def test_lct_signal():
         all_fvals.append([float(f) for f in fvals])
         all_uvals.append([float(u) for u in uvals])
 
+    sigs = list(zip(dus, all_fvals))
+    f = str([dus, *all_uvals, *all_fvals]).replace("],", "]\n")
+    s = str([lct_lib.resample_signal(_K_RSMP, sig) for sig in sigs])
+    c = str([lct_lib.scale_signal(_M_SCL, sig) for sig in sigs])
+
     _ndiff_files(
         data_dir.join("u_and_f_vals.txt"),
-        pkio.write_text(work_dir.join("u_and_f_vals_actual.txt"), str([dus, *all_uvals, *all_fvals]).replace("],", "]\n")),
+        pkio.write_text(work_dir.join("u_and_f_vals_actual.txt"), f),
         work_dir.join("ndiff.out"),
         data_dir
     )
-
-    k_rsmp = 2.0
-    signals = list(zip(dus, all_fvals))
-    rsmps = [lct_lib.resample_signal(k_rsmp, sig) for sig in signals]
-
     _ndiff_files(
         data_dir.join("signals.txt"),
-        pkio.write_text(work_dir.join("signals_actual.txt"),
-            str(rsmps)
-        ),
+        pkio.write_text(work_dir.join("signals_actual.txt"), s),
+        work_dir.join("ndiff.out"),
+        data_dir
+    )
+    _ndiff_files(
+        data_dir.join("scaled_signals.txt"),
+        pkio.write_text(work_dir.join("scaled_signals_actual.txt"), c),
         work_dir.join("ndiff.out"),
         data_dir
     )
@@ -91,7 +102,7 @@ def test_lct_signal():
 def test_lct_abscissae():
     data_dir = pkunit.data_dir()
     work_dir = pkunit.empty_work_dir()
-    abscissaes = [list(x) for x in [
+    a = str([list(x) for x in [
         lct_lib.lct_abscissae(8, 0.25),
         lct_lib.lct_abscissae(7, 0.25),
         lct_lib.lct_abscissae(8, 0.25, ishift = True),
@@ -99,16 +110,31 @@ def test_lct_abscissae():
         lct_lib.lct_abscissae(20, 3 / (20 // 2)),
         lct_lib.lct_abscissae(21, 3 / (21 // 2))
         ]
-    ]
-
+    ]).replace("],", "]\n")
     _ndiff_files(
         data_dir.join("lct_abscissae_outputs.txt"),
         pkio.write_text(work_dir.join("lct_abscissae_outputs_actual.txt"),
-            str(abscissaes).replace("],", "]\n")
+            a
         ),
         work_dir.join("ndiff.out"),
         data_dir
     )
+
+
+def test_lct_fourier():
+    pass
+
+
+def test_chirp_multiply():
+    pass
+
+
+def test_lct_decomposition():
+    pass
+
+
+def test_apply_lct():
+    pass
 
 
 def _ndiff_files(expect_path, actual_path, diff_file, data_dir):

@@ -3,6 +3,7 @@ from pykern import pkunit
 from pykern.pkcollections import PKDict
 from pykern import pkio
 import numpy as np
+import re
 
 
 # TODO (gurhar1133): floating point not allways deterministic
@@ -72,23 +73,23 @@ def test_lct_abscissae_and_signal():
 
     assert dus == [0.08823529411764706, 0.2, 0.16, 0.16]
 
-    print(f"uvals:{all_uvals}")
-    print(f"fvals:{all_fvals}")
+    # print(f"uvals:{all_uvals}")
+    # print(f"fvals:{all_fvals}")
     data_dir = pkunit.data_dir()
-    expect_path = data_dir.join("1.out/u_and_f_vals.txt")
-    actual_path = pkio.write_text("u_and_f_vals_actual.txt", str([*all_uvals, *all_fvals]))
+    work_dir = pkunit.empty_work_dir()
+    print(f"\n\n\n empty work_dir: {work_dir}")
+    expect_path = data_dir.join("u_and_f_vals.txt")
+    actual_path = pkio.write_text(work_dir.join("u_and_f_vals_actual.txt"), str([*all_uvals, *all_fvals]))
 
     from pykern import pksubprocess
 
     pksubprocess.check_call_with_signals([
-        "ndiff", actual_path, expect_path, "ndiff_conf.txt",
-    ], output="u_and_f_vals_ndiff.out")
+        "ndiff", actual_path, expect_path, data_dir.join("ndiff_conf.txt"),
+    ], output=str(work_dir.join("u_and_f_vals_ndiff.out")))
 
-    # for d in pkunit.case_dirs(group_prefix="1"):
-    #     pkio.write_text(d.join("u_and_f_vals.txt"),
-    #         str([*all_uvals, *all_fvals]
-    #         )
-    #     )
+    d = pkio.read_text(work_dir.join("u_and_f_vals_ndiff.out"))
+    assert not re.search("diffs have been detected", d)
+
 
     assert list(lct_lib.lct_abscissae(8, 0.25)) == [-1.  , -0.75, -0.5 , -0.25,  0.  ,  0.25,  0.5 ,  0.75]
     assert list(lct_lib.lct_abscissae(7, 0.25)) == [-0.75, -0.5 , -0.25,  0.  ,  0.25,  0.5 ,  0.75]

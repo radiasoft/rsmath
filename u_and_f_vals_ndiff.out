@@ -1,7 +1,0 @@
-processing '/home/vagrant/src/radiasoft/rsmath/u_and_f_vals_actual.txt'|'/home/vagrant/src/radiasoft/rsmath/tests/lct_data/1.out/u_and_f_vals.txt'
-warng: (ndiff.c:281): (*) files '/home/vagrant/src/radiasoft/rsmath/u_and_f_vals_actual.txt'|'/home/vagrant/src/radiasoft/rsmath/tests/lct_data/1.out/u_and_f_vals.txt' differ
-warng: (ndiff.c:810): (1) files differ at line 2 column 1 between char-columns 8|8 and 19|12
-warng: (ndiff.c:815): (1) numbers: '-2.55882353'|'-2.5'
-warng: (ndiff.c:824): (1) absolute error (rule #1, line 1: -0.001<=abs<=0.001) abs=-0.059, rel=-0.024, ndig=9
-warng: (main.c:43): (=)     77 lines have been diffed
-warng: (main.c:44): (=)      1 diffs have been detected

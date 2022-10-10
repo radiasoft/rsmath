@@ -1,21 +1,18 @@
 from rsmath import lct_lib
 from pykern import pkunit
 from pykern.pkcollections import PKDict
+from pykern import pksubprocess
 from pykern import pkio
 import numpy as np
 import re
 
 
-# TODO (gurhar1133): floating point not allways deterministic
-# change test structure to reflect that fact
-
-def test_lct_abscissae_and_signal():
+def test_lct_signal():
+    data_dir = pkunit.data_dir()
+    work_dir = pkunit.empty_work_dir()
 
     def testFn1(u):
         return np.exp(- np.pi * (1. + 1.j) * u**2)
-
-    def testFn1a(u):
-        return np.exp(- np.pi * (1. + 1.j) * (u + 0.5)**2)
 
     def tri(t):
         if type(t) in (list, np.ndarray):
@@ -68,41 +65,57 @@ def test_lct_abscissae_and_signal():
     for i, inputs in enumerate(((3., 69), (5., 50), (8., 100), (8., 100))):
         du, uvals, fvals = d_f_u_vals(*inputs, i)
         dus.append(du)
-        all_fvals.append(fvals)
-        all_uvals.append(uvals)
+        all_fvals.append([float(f) for f in fvals])
+        all_uvals.append([float(u) for u in uvals])
 
-    assert dus == [0.08823529411764706, 0.2, 0.16, 0.16]
-
-    # print(f"uvals:{all_uvals}")
-    # print(f"fvals:{all_fvals}")
-    data_dir = pkunit.data_dir()
-    work_dir = pkunit.empty_work_dir()
-    print(f"\n\n\n empty work_dir: {work_dir}")
-    expect_path = data_dir.join("u_and_f_vals.txt")
-    actual_path = pkio.write_text(work_dir.join("u_and_f_vals_actual.txt"), str([*all_uvals, *all_fvals]))
-
-    from pykern import pksubprocess
-
-    pksubprocess.check_call_with_signals([
-        "ndiff", actual_path, expect_path, data_dir.join("ndiff_conf.txt"),
-    ], output=str(work_dir.join("u_and_f_vals_ndiff.out")))
-
-    d = pkio.read_text(work_dir.join("u_and_f_vals_ndiff.out"))
-    assert not re.search("diffs have been detected", d)
-
-
-    assert list(lct_lib.lct_abscissae(8, 0.25)) == [-1.  , -0.75, -0.5 , -0.25,  0.  ,  0.25,  0.5 ,  0.75]
-    assert list(lct_lib.lct_abscissae(7, 0.25)) == [-0.75, -0.5 , -0.25,  0.  ,  0.25,  0.5 ,  0.75]
-    assert list(lct_lib.lct_abscissae(8, 0.25, ishift = True)) == [ 0.  ,  0.25,  0.5 ,  0.75, -1.  , -0.75, -0.5 , -0.25]
-    assert list(lct_lib.lct_abscissae(7, 0.25, ishift = True)) == [ 0.  ,  0.25,  0.5 ,  0.75, -0.75, -0.5 , -0.25]
-    assert [round(x, 1) for x in list(lct_lib.lct_abscissae(20, 3 / (20 // 2)))] == [-3. , -2.7, -2.4, -2.1, -1.8, -1.5, -1.2, -0.9, -0.6, -0.3,  0. , 0.3,  0.6,  0.9,  1.2,  1.5,  1.8,  2.1,  2.4,  2.7]
-    assert [round(x, 1) for x in list(lct_lib.lct_abscissae(21, 3 / (21 // 2)))] == [-3. , -2.7, -2.4, -2.1, -1.8, -1.5, -1.2, -0.9, -0.6, -0.3,  0. , 0.3,  0.6,  0.9,  1.2,  1.5,  1.8,  2.1,  2.4,  2.7,  3. ]
-
-
+    _ndiff_files(
+        data_dir.join("u_and_f_vals.txt"),
+        pkio.write_text(work_dir.join("u_and_f_vals_actual.txt"), str([dus, *all_uvals, *all_fvals]).replace("],", "]\n")),
+        work_dir.join("ndiff.out"),
+        data_dir
+    )
 
     k_rsmp = 2.0
     signals = list(zip(dus, all_fvals))
     rsmps = [lct_lib.resample_signal(k_rsmp, sig) for sig in signals]
 
-    # for d in pkunit.case_dirs(group_prefix="2"):
-    #     pkio.write_text(d.join("signals.txt"), str(rsmps))
+    _ndiff_files(
+        data_dir.join("signals.txt"),
+        pkio.write_text(work_dir.join("signals_actual.txt"),
+            str(rsmps)
+        ),
+        work_dir.join("ndiff.out"),
+        data_dir
+    )
+
+def test_lct_abscissae():
+    data_dir = pkunit.data_dir()
+    work_dir = pkunit.empty_work_dir()
+    abscissaes = [list(x) for x in [
+        lct_lib.lct_abscissae(8, 0.25),
+        lct_lib.lct_abscissae(7, 0.25),
+        lct_lib.lct_abscissae(8, 0.25, ishift = True),
+        lct_lib.lct_abscissae(7, 0.25, ishift = True),
+        lct_lib.lct_abscissae(20, 3 / (20 // 2)),
+        lct_lib.lct_abscissae(21, 3 / (21 // 2))
+        ]
+    ]
+
+    _ndiff_files(
+        data_dir.join("lct_abscissae_outputs.txt"),
+        pkio.write_text(work_dir.join("lct_abscissae_outputs_actual.txt"),
+            str(abscissaes).replace("],", "]\n")
+        ),
+        work_dir.join("ndiff.out"),
+        data_dir
+    )
+
+
+def _ndiff_files(expect_path, actual_path, diff_file, data_dir):
+        pksubprocess.check_call_with_signals([
+            "ndiff", actual_path, expect_path, data_dir.join("ndiff_conf.txt"),
+        ], output=str(diff_file))
+
+        d = pkio.read_text(diff_file)
+        if re.search("diffs have been detected", d):
+            raise AssertionError(f"{d}")

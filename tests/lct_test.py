@@ -62,9 +62,9 @@ def test_lct_signal():
         ][fn_idx](uvals)
         return du, uvals, fvals
 
-    # def _cast_flt(sig):
-    #     # sig[1] = [float(s) for s in sig[1]]
-    #     return sig
+    def _cast_flt(sig):
+        sig[1] = [s.real for s in sig[1]]
+        return sig
 
     dus = []
     all_fvals = []
@@ -72,13 +72,13 @@ def test_lct_signal():
     for i, inputs in enumerate(((3., 69), (5., 50), (8., 100), (8., 100))):
         du, uvals, fvals = d_f_u_vals(*inputs, i)
         dus.append(du)
-        all_fvals.append([float(f) for f in fvals])
-        all_uvals.append([float(u) for u in uvals])
+        all_fvals.append([f.real for f in fvals])
+        all_uvals.append([u.real for u in uvals])
 
     sigs = list(zip(dus, all_fvals))
     f = str([dus, *all_uvals, *all_fvals]).replace("],", "]\n")
     s = str([lct_lib.resample_signal(_K_RSMP, sig) for sig in sigs])
-    c = str([lct_lib.scale_signal(_M_SCL, sig) for sig in sigs])
+    c = str([_cast_flt(lct_lib.scale_signal(_M_SCL, sig)) for sig in sigs]).replace("],", "]\n")
 
     _ndiff_files(
         data_dir.join("u_and_f_vals.txt"),

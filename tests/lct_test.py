@@ -1,4 +1,4 @@
-from rsmath import lct_lib
+from rsmath import lct
 from pykern import pkunit
 from pykern.pkcollections import PKDict
 from pykern import pksubprocess
@@ -53,7 +53,7 @@ def test_lct_signal():
 
     def d_f_u_vals(rh, np, fn_idx):
         du = rh / (np // 2)
-        uvals = lct_lib.lct_abscissae(np, du)
+        uvals = lct.lct_abscissae(np, du)
         fvals = [
             testFn1,
             testFn2,
@@ -81,8 +81,8 @@ def test_lct_signal():
 
     sigs = list(zip(dus, all_fvals))
     f = str([dus, *all_uvals, *all_fvals]).replace("],", "]\n")
-    s = str([lct_lib.resample_signal(_K_RSMP, sig) for sig in sigs])
-    c = str([_cast_flt(lct_lib.scale_signal(_M_SCL, sig)) for sig in sigs]).replace("],", "]\n")
+    s = str([lct.resample_signal(_K_RSMP, sig) for sig in sigs])
+    c = str([_cast_flt(lct.scale_signal(_M_SCL, sig)) for sig in sigs]).replace("],", "]\n")
 
     _ndiff_files(
         data_dir.join("u_and_f_vals.txt"),
@@ -107,12 +107,12 @@ def test_lct_abscissae():
     data_dir = pkunit.data_dir()
     work_dir = pkunit.empty_work_dir()
     a = str([list(x) for x in [
-        lct_lib.lct_abscissae(8, 0.25),
-        lct_lib.lct_abscissae(7, 0.25),
-        lct_lib.lct_abscissae(8, 0.25, ishift = True),
-        lct_lib.lct_abscissae(7, 0.25, ishift = True),
-        lct_lib.lct_abscissae(20, 3 / (20 // 2)),
-        lct_lib.lct_abscissae(21, 3 / (21 // 2))
+        lct.lct_abscissae(8, 0.25),
+        lct.lct_abscissae(7, 0.25),
+        lct.lct_abscissae(8, 0.25, ishift = True),
+        lct.lct_abscissae(7, 0.25, ishift = True),
+        lct.lct_abscissae(20, 3 / (20 // 2)),
+        lct.lct_abscissae(21, 3 / (21 // 2))
         ]
     ]).replace("],", "]\n")
     _ndiff_files(

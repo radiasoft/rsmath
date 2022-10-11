@@ -63,6 +63,8 @@ def test_lct_signal():
         return du, uvals, fvals
 
     def _cast_flt(sig):
+        #TODO (gurhar1133): all complex numbers must compare
+        # real and imaginary separately if possible
         sig[1] = [s.real for s in sig[1]]
         return sig
 
@@ -72,6 +74,8 @@ def test_lct_signal():
     for i, inputs in enumerate(((3., 69), (5., 50), (8., 100), (8., 100))):
         du, uvals, fvals = d_f_u_vals(*inputs, i)
         dus.append(du)
+        #TODO (gurhar1133): all complex numbers must compare
+        # real and imaginary separately if possible
         all_fvals.append([f.real for f in fvals])
         all_uvals.append([u.real for u in uvals])
 

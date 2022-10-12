@@ -62,51 +62,41 @@ def test_lct_signal():
         ][fn_idx](uvals)
         return du, uvals, fvals
 
-    def _cast_flt(sig):
-        #TODO (gurhar1133): all complex numbers must compare
-        # real and imaginary separately if possible
-        sig[1] = [s.real for s in sig[1]]
-        return sig
-
     dus = []
     all_fvals = []
     all_uvals = []
     for i, inputs in enumerate(((3., 69), (5., 50), (8., 100), (8., 100))):
         du, uvals, fvals = d_f_u_vals(*inputs, i)
         dus.append(du)
-        #TODO (gurhar1133): all complex numbers must compare
-        # real and imaginary separately if possible
-        all_fvals.append([f.real for f in fvals])
-        all_uvals.append([u.real for u in uvals])
+        all_fvals.append([f for f in fvals])
+        all_uvals.append([u for u in uvals])
 
     sigs = list(zip(dus, all_fvals))
-    f = str([dus, *all_uvals, *all_fvals]).replace("],", "]\n")
-    s = str([lct.resample_signal(_K_RSMP, sig) for sig in sigs])
-    c = str([_cast_flt(lct.scale_signal(_M_SCL, sig)) for sig in sigs]).replace("],", "]\n")
+    f = _fmt_matrix_string(str([
+        [_cast_complex_for_write(d) for d in dus],
+        *[[_cast_complex_for_write(u) for u in uval] for uval in all_uvals],
+        *[[_cast_complex_for_write(f) for f in fval] for fval in all_fvals]
+    ]))
+    s = _cast_from_complex_signal(sigs, lct.resample_signal, _K_RSMP)
+    c = _cast_from_complex_signal(sigs, lct.scale_signal, _M_SCL)
 
-    _ndiff_files(
-        data_dir.join("u_and_f_vals.txt"),
-        pkio.write_text(work_dir.join("u_and_f_vals_actual.txt"), f),
-        work_dir.join("ndiff.out"),
-        data_dir
-    )
-    _ndiff_files(
-        data_dir.join("signals.txt"),
-        pkio.write_text(work_dir.join("signals_actual.txt"), s),
-        work_dir.join("ndiff.out"),
-        data_dir
-    )
-    _ndiff_files(
-        data_dir.join("scaled_signals.txt"),
-        pkio.write_text(work_dir.join("scaled_signals_actual.txt"), c),
-        work_dir.join("ndiff.out"),
-        data_dir
-    )
+    for case in (
+        PKDict(case="u_and_f_vals", data=f),
+        PKDict(case="signals", data=s),
+        PKDict(case="scaled_signals", data=c),
+    ):
+        _ndiff_files(
+            data_dir.join(case.case + ".txt"),
+            pkio.write_text(work_dir.join(case.case + "_actual.txt"), case.data),
+            work_dir.join("ndiff.out"),
+            data_dir
+        )
+
 
 def test_lct_abscissae():
     data_dir = pkunit.data_dir()
     work_dir = pkunit.empty_work_dir()
-    a = str([list(x) for x in [
+    a = _fmt_matrix_string(str([list(x) for x in [
         lct.lct_abscissae(8, 0.25),
         lct.lct_abscissae(7, 0.25),
         lct.lct_abscissae(8, 0.25, ishift = True),
@@ -114,7 +104,7 @@ def test_lct_abscissae():
         lct.lct_abscissae(20, 3 / (20 // 2)),
         lct.lct_abscissae(21, 3 / (21 // 2))
         ]
-    ]).replace("],", "]\n")
+    ]))
     _ndiff_files(
         data_dir.join("lct_abscissae_outputs.txt"),
         pkio.write_text(work_dir.join("lct_abscissae_outputs_actual.txt"),
@@ -149,3 +139,19 @@ def _ndiff_files(expect_path, actual_path, diff_file, data_dir):
         d = pkio.read_text(diff_file)
         if re.search("diffs have been detected", d):
             raise AssertionError(f"{d}")
+
+
+def _cast_complex_for_write(number):
+    return (number.real, number.imag)
+
+
+def _cast_from_complex_signal(signals, signal_function, factor):
+        s = [signal_function(factor, sig) for sig in signals]
+        for arr in s:
+            conv = [_cast_complex_for_write(number) for number in arr[1]]
+            arr[1] = conv
+        return _fmt_matrix_string(str(s))
+
+
+def _fmt_matrix_string(matrix_string):
+    return matrix_string.replace("],", "]\n")

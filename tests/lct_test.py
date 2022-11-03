@@ -151,14 +151,11 @@ def test_apply_2d_sep():
 
     data_dir = pkunit.data_dir()
     work_dir = pkunit.empty_work_dir()
-    i = pkjson.load_any(data_dir.join("json_inputs.json")).in_data
-    # print(i)
-    mx = [[-0.4999999999999998, -0.8660254037844387], [0.8660254037844387, -0.4999999999999998]]
-    my = [[-0.4999999999999998, -0.8660254037844387], [0.8660254037844387, -0.4999999999999998]]
-    res = lct.apply_lct_2d_sep(mx, my, i)
+    i = pkjson.load_any(data_dir.join("json_inputs.json"))
+    res = lct.apply_lct_2d_sep(i.mx, i.my, i.signal_in)
     print(res, "\n res ^")
     _ndiff_files(
-        data_dir.join("2d_sep_expect_output.txt"),
+        data_dir.join("2d_sep_expect_out.txt"),
         pkio.write_text(
             work_dir.join("2d_sep_actual.txt"),
             str(res),

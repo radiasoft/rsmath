@@ -151,18 +151,24 @@ def test_apply_2d_sep():
 
     data_dir = pkunit.data_dir()
     work_dir = pkunit.empty_work_dir()
-    i = pkjson.load_any(data_dir.join("json_inputs.json"))
-    res = lct.apply_lct_2d_sep(i.mx, i.my, i.signal_in)
-    print(res, "\n res ^")
-    _ndiff_files(
-        data_dir.join("2d_sep_expect_out.txt"),
-        pkio.write_text(
-            work_dir.join("2d_sep_actual.txt"),
-            str(res),
-        ),
-        work_dir.join("ndiff.out"),
-        data_dir,
-    )
+    for case_number in (0, 1):
+        i = pkjson.load_any(data_dir.join(f"json_inputs{case_number}.json"))
+        if case_number == 1:
+            # assert 0, f"{i.signal_in[2]}"
+            for idx, arr in enumerate(i.signal_in[2]):
+                new_arr = [complex(s) for s in arr]
+                i.signal_in[2][idx] = new_arr
+        # TODO (gurhar1133): I think I want json output comparison instead
+        res = lct.apply_lct_2d_sep(i.mx, i.my, i.signal_in)
+        _ndiff_files(
+            data_dir.join(f"2d_sep_expect_out{case_number}.txt"),
+            pkio.write_text(
+                work_dir.join(f"2d_sep_actual{case_number}.txt"),
+                str(res),
+            ),
+            work_dir.join("ndiff.out"),
+            data_dir,
+        )
 
 def _vals():
     dus = []

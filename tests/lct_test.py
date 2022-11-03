@@ -146,6 +146,24 @@ def test_apply_lct():
     )
 
 
+def test_apply_2d_sep():
+    data_dir = pkunit.data_dir()
+    work_dir = pkunit.empty_work_dir()
+    i = np.genfromtxt(data_dir.join("2d_sep_in.txt"))
+    mx = [[-0.4999999999999998, -0.8660254037844387], [0.8660254037844387, -0.4999999999999998]]
+    my = [[-0.4999999999999998, -0.8660254037844387], [0.8660254037844387, -0.4999999999999998]]
+    res = lct.apply_lct_2d_sep(mx, my, i)
+    print(res)
+    # _ndiff_files(
+    #     data_dir.join("2d_sep_expect_output.txt"),
+    #     pkio.write_text(
+    #         work_dir.join("2d_sep_actual.txt"),
+    #         str(res),
+    #     ),
+    #     work_dir.join("ndiff.out"),
+    #     data_dir,
+    # )
+
 def _vals():
     dus = []
     all_fvals = []

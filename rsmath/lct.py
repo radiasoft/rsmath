@@ -274,6 +274,43 @@ def apply_lct(M_lct, in_signal):
     return signal1
 
 
+def apply_lct_2d_sep(MX_lct, MY_lct, in_signal):
+    """
+    Apply LCT[M_lct] to a given input signal, and return the result.
+    In this case, the 4x4 matrix M_lct is assumed separable and defined
+    by the pair of 2x2 matrices MX_lct and MY_lct. In addition, the
+    input signal is taken to have the form ( dX, dY, signal_array ),
+    where dX and dY denote the sample intervals along the rows and
+    columns respectively of the given 2D signal_array.
+    Given a pair of symplectic 2x2 ABCD matrices that define an
+    uncoupled LCT in two dimensions, apply LCT[MX_lct] to each row,
+    and then LCT[MY_lct] to each column.
+    The algorithm implemented here is that given by Koç, et al.
+    in IEEE Trans. Signal Proc. 56(6):2383--2394, June 2008.
+    Arguments:
+    MX_lct -- symplectic 2x2 matrix that describes the desired LCT
+    MY_lct -- symplectic 2x2 matrix that describes the desired LCT
+    in_signal -- the signal to transform, [ dX, dY, signal_array], where
+                 dX and dY denote the sample intervals of the given
+                 signal along its two axes
+    Return the transformed signal in the form [ dY, LCT[M_lct](signal)].
+    """
+    # extract the pieces
+    dX, dY, signal_array = in_signal
+
+    # apply LCT[MX_lct] to each row
+    lct_x = [ apply_lct(MX_lct, (dX, sig_x)) for sig_x in signal_array  ]
+    dX_out = lct_x[0][0]
+
+    # apply LCT[MY_lct] to each column
+    signal_array = np.asarray([ s[-1] for s in lct_x ]).T
+    lct_y = [ apply_lct(MY_lct, (dY, sig_y)) for sig_y in signal_array ]
+    dY_out = lct_y[0][0]
+
+    signal_array = np.asarray([ s[-1] for s in lct_y ]).T
+    return (dX_out, dY_out, signal_array)
+
+
 def _convert_params_3to4(alpha, beta, gamma):
     """
     Given LCT parameters (α,β,γ), return the associated 2x2 ABCD matrix.

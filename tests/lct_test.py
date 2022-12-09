@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for linear canonical transform functions
+u"""Tests for linear canonical transform functions
 """
 from rsmath import lct
 from pykern import pkunit

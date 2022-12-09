@@ -41,11 +41,9 @@ def test_lct_signal():
         PKDict(case="signals", data=s),
         PKDict(case="scaled_signals", data=c),
     ):
-        _ndiff_files(
-            data_dir.join(case.case + ".txt"),
-            pkio.write_text(work_dir.join(case.case + "_actual.txt"), case.data),
-            work_dir.join("ndiff.out"),
-            data_dir,
+        pkunit.file_eq(
+            expect_path=data_dir.join(case.case + ".txt"),
+            actual_path=pkio.write_text(work_dir.join(case.case + "_actual.txt"), case.data),
         )
 
 

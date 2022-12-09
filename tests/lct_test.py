@@ -42,9 +42,9 @@ def test_lct_signal():
         PKDict(case="scaled_signals", data=c),
     ):
         pkunit.file_eq(
-            expect_path=data_dir.join(case.case + ".txt"),
+            expect_path=data_dir.join(case.case + ".ndiff"),
             actual_path=pkio.write_text(
-                work_dir.join(case.case + "_actual.txt"), case.data
+                work_dir.join(case.case + "_actual.ndiff"), case.data
             ),
         )
 
@@ -68,9 +68,9 @@ def test_lct_abscissae():
         )
     )
     pkunit.file_eq(
-        expect_path=data_dir.join("lct_abscissae_outputs.txt"),
+        expect_path=data_dir.join("lct_abscissae_outputs.ndiff"),
         actual_path=pkio.write_text(
-            work_dir.join("lct_abscissae_outputs_actual.txt"), a
+            work_dir.join("lct_abscissae_outputs_actual.ndiff"), a
         ),
     )
 
@@ -82,8 +82,8 @@ def test_lct_fourier():
     sigs = list(zip(dus, all_fvals))
     r = _cast_from_complex_signal(sigs, lct.lct_fourier, None)
     pkunit.file_eq(
-        expect_path=data_dir.join("fourier.txt"),
-        actual_path=pkio.write_text(work_dir.join("fourier_actual.txt"), r),
+        expect_path=data_dir.join("fourier.ndiff"),
+        actual_path=pkio.write_text(work_dir.join("fourier_actual.ndiff"), r),
     )
 
 
@@ -94,8 +94,8 @@ def test_chirp_multiply():
     sigs = list(zip(dus, all_fvals))
     r = _cast_from_complex_signal(sigs, lct.chirp_multiply, _Q_CM)
     pkunit.file_eq(
-        expect_path=data_dir.join("cm_signals.txt"),
-        actual_path=pkio.write_text(work_dir.join("cm_signals_actual.txt"), r),
+        expect_path=data_dir.join("cm_signals.ndiff"),
+        actual_path=pkio.write_text(work_dir.join("cm_signals_actual.ndiff"), r),
     )
 
 
@@ -104,8 +104,8 @@ def test_lct_decomposition():
     work_dir = pkunit.empty_work_dir()
     d = str([lct.lct_decomposition(m) for m in _EXAMPLE_MATRICES])
     pkunit.file_eq(
-        expect_path=data_dir.join("lct_decomp.txt"),
-        actual_path=pkio.write_text(work_dir.join("lct_decomp_actual.txt"), d),
+        expect_path=data_dir.join("lct_decomp.ndiff"),
+        actual_path=pkio.write_text(work_dir.join("lct_decomp_actual.ndiff"), d),
     )
 
 
@@ -120,9 +120,9 @@ def test_apply_lct():
     signal1a = [du1, _fn1a(lct.lct_abscissae(np1, du1))]
     signal3 = [du3, _fn3(lct.lct_abscissae(np3, du3))]
     pkunit.file_eq(
-        expect_path=data_dir.join("lct.txt"),
+        expect_path=data_dir.join("lct.ndiff"),
         actual_path=pkio.write_text(
-            work_dir.join("lct_actual.txt"),
+            work_dir.join("lct_actual.ndiff"),
             str(
                 _convert_signal_data(
                     [
@@ -145,9 +145,9 @@ def test_apply_2d_sep():
         i = _case(case_number, data_dir)
         r = lct.apply_lct_2d_sep(i.mx, i.my, i.signal_in)
         pkunit.file_eq(
-            expect_path=data_dir.join(f"2d_sep_expect_out{case_number}.txt"),
+            expect_path=data_dir.join(f"2d_sep_expect_out{case_number}.ndiff"),
             actual_path=pkio.write_text(
-                work_dir.join(f"2d_sep_actual{case_number}.txt"),
+                work_dir.join(f"2d_sep_actual{case_number}.ndiff"),
                 str([r[0], r[1], [_cast_complex_for_write(number) for number in r[2]]]),
             ),
         )

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-u"""Tests for linear canonical transform functions
+"""Tests for linear canonical transform functions
 """
 from rsmath import lct
 from pykern import pkunit
@@ -43,7 +43,9 @@ def test_lct_signal():
     ):
         pkunit.file_eq(
             expect_path=data_dir.join(case.case + ".txt"),
-            actual_path=pkio.write_text(work_dir.join(case.case + "_actual.txt"), case.data),
+            actual_path=pkio.write_text(
+                work_dir.join(case.case + "_actual.txt"), case.data
+            ),
         )
 
 
@@ -67,7 +69,9 @@ def test_lct_abscissae():
     )
     pkunit.file_eq(
         expect_path=data_dir.join("lct_abscissae_outputs.txt"),
-        actual_path=pkio.write_text(work_dir.join("lct_abscissae_outputs_actual.txt"), a),
+        actual_path=pkio.write_text(
+            work_dir.join("lct_abscissae_outputs_actual.txt"), a
+        ),
     )
 
 
@@ -111,7 +115,7 @@ def test_apply_lct():
     np1 = 64
     du1 = 3.0 / (np1 // 2)
     np3 = 384
-    du3 = 15. / (np3 // 2)
+    du3 = 15.0 / (np3 // 2)
     signal1 = [du1, _fn1(lct.lct_abscissae(np1, du1))]
     signal1a = [du1, _fn1a(lct.lct_abscissae(np1, du1))]
     signal3 = [du3, _fn3(lct.lct_abscissae(np3, du3))]
@@ -140,12 +144,11 @@ def test_apply_2d_sep():
     for case_number in (0, 1):
         i = _case(case_number, data_dir)
         r = lct.apply_lct_2d_sep(i.mx, i.my, i.signal_in)
-        # TODO (gurhar1133): Why skipping?
         pkunit.file_eq(
             expect_path=data_dir.join(f"2d_sep_expect_out{case_number}.txt"),
             actual_path=pkio.write_text(
                 work_dir.join(f"2d_sep_actual{case_number}.txt"),
-                str([r[0], r[1], [_cast_complex_for_write(number) for number in r[2]]])
+                str([r[0], r[1], [_cast_complex_for_write(number) for number in r[2]]]),
             ),
         )
 

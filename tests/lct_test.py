@@ -65,11 +65,9 @@ def test_lct_abscissae():
             ]
         )
     )
-    _ndiff_files(
-        data_dir.join("lct_abscissae_outputs.txt"),
-        pkio.write_text(work_dir.join("lct_abscissae_outputs_actual.txt"), a),
-        work_dir.join("ndiff.out"),
-        data_dir,
+    pkunit.file_eq(
+        expect_path=data_dir.join("lct_abscissae_outputs.txt"),
+        actual_path=pkio.write_text(work_dir.join("lct_abscissae_outputs_actual.txt"), a),
     )
 
 
@@ -79,11 +77,9 @@ def test_lct_fourier():
     dus, all_fvals, all_uvals = _vals()
     sigs = list(zip(dus, all_fvals))
     r = _cast_from_complex_signal(sigs, lct.lct_fourier, None)
-    _ndiff_files(
-        data_dir.join("fourier.txt"),
-        pkio.write_text(work_dir.join("fourier_actual.txt"), r),
-        work_dir.join("ndiff.out"),
-        data_dir,
+    pkunit.file_eq(
+        expect_path=data_dir.join("fourier.txt"),
+        actual_path=pkio.write_text(work_dir.join("fourier_actual.txt"), r),
     )
 
 
@@ -93,11 +89,9 @@ def test_chirp_multiply():
     dus, all_fvals, all_uvals = _vals()
     sigs = list(zip(dus, all_fvals))
     r = _cast_from_complex_signal(sigs, lct.chirp_multiply, _Q_CM)
-    _ndiff_files(
-        data_dir.join("cm_signals.txt"),
-        pkio.write_text(work_dir.join("cm_signals_actual.txt"), r),
-        work_dir.join("ndiff.out"),
-        data_dir,
+    pkunit.file_eq(
+        expect_path=data_dir.join("cm_signals.txt"),
+        actual_path=pkio.write_text(work_dir.join("cm_signals_actual.txt"), r),
     )
 
 
@@ -105,11 +99,9 @@ def test_lct_decomposition():
     data_dir = pkunit.data_dir()
     work_dir = pkunit.empty_work_dir()
     d = str([lct.lct_decomposition(m) for m in _EXAMPLE_MATRICES])
-    _ndiff_files(
-        data_dir.join("lct_decomp.txt"),
-        pkio.write_text(work_dir.join("lct_decomp_actual.txt"), d),
-        work_dir.join("ndiff.out"),
-        data_dir,
+    pkunit.file_eq(
+        expect_path=data_dir.join("lct_decomp.txt"),
+        actual_path=pkio.write_text(work_dir.join("lct_decomp_actual.txt"), d),
     )
 
 
@@ -123,9 +115,9 @@ def test_apply_lct():
     signal1 = [du1, _fn1(lct.lct_abscissae(np1, du1))]
     signal1a = [du1, _fn1a(lct.lct_abscissae(np1, du1))]
     signal3 = [du3, _fn3(lct.lct_abscissae(np3, du3))]
-    _ndiff_files(
-        data_dir.join("lct.txt"),
-        pkio.write_text(
+    pkunit.file_eq(
+        expect_path=data_dir.join("lct.txt"),
+        actual_path=pkio.write_text(
             work_dir.join("lct_actual.txt"),
             str(
                 _convert_signal_data(
@@ -139,8 +131,6 @@ def test_apply_lct():
                 )
             ),
         ),
-        work_dir.join("ndiff.out"),
-        data_dir,
     )
 
 
@@ -150,14 +140,13 @@ def test_apply_2d_sep():
     for case_number in (0, 1):
         i = _case(case_number, data_dir)
         r = lct.apply_lct_2d_sep(i.mx, i.my, i.signal_in)
-        _ndiff_files(
-            data_dir.join(f"2d_sep_expect_out{case_number}.txt"),
-            pkio.write_text(
+        # TODO (gurhar1133): Why skipping?
+        pkunit.file_eq(
+            expect_path=data_dir.join(f"2d_sep_expect_out{case_number}.txt"),
+            actual_path=pkio.write_text(
                 work_dir.join(f"2d_sep_actual{case_number}.txt"),
                 str([r[0], r[1], [_cast_complex_for_write(number) for number in r[2]]])
             ),
-            work_dir.join("ndiff.out"),
-            data_dir,
         )
 
 
@@ -182,22 +171,6 @@ def _vals():
         all_fvals.append([f for f in fvals])
         all_uvals.append([u for u in uvals])
     return dus, all_fvals, all_uvals
-
-
-def _ndiff_files(expect_path, actual_path, diff_file, data_dir):
-    pksubprocess.check_call_with_signals(
-        [
-            "ndiff",
-            actual_path,
-            expect_path,
-            data_dir.join("ndiff_conf.txt"),
-        ],
-        output=str(diff_file),
-    )
-
-    d = pkio.read_text(diff_file)
-    if re.search("diffs have been detected", d):
-        raise AssertionError(f"{d}")
 
 
 def _cast_complex_for_write(number):

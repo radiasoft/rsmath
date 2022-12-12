@@ -22,7 +22,6 @@ _EXAMPLE_MATRICES = [
 
 def test_lct_signal():
     data_dir = pkunit.data_dir()
-    work_dir = pkunit.empty_work_dir()
     dus, all_fvals, all_uvals = _vals()
     sigs = list(zip(dus, all_fvals))
     f = _fmt_matrix_string(
@@ -43,75 +42,63 @@ def test_lct_signal():
     ):
         pkunit.file_eq(
             expect_path=data_dir.join(case.case + ".ndiff"),
-            actual_path=pkio.write_text(
-                work_dir.join(case.case + "_actual.ndiff"), case.data
-            ),
+            actual=case.data,
         )
 
 
 def test_lct_abscissae():
     data_dir = pkunit.data_dir()
-    work_dir = pkunit.empty_work_dir()
-    a = _fmt_matrix_string(
-        str(
-            [
-                list(x)
-                for x in [
-                    lct.lct_abscissae(8, 0.25),
-                    lct.lct_abscissae(7, 0.25),
-                    lct.lct_abscissae(8, 0.25, ishift=True),
-                    lct.lct_abscissae(7, 0.25, ishift=True),
-                    lct.lct_abscissae(20, 3 / (20 // 2)),
-                    lct.lct_abscissae(21, 3 / (21 // 2)),
-                ]
-            ]
-        )
-    )
     pkunit.file_eq(
         expect_path=data_dir.join("lct_abscissae_outputs.ndiff"),
-        actual_path=pkio.write_text(
-            work_dir.join("lct_abscissae_outputs_actual.ndiff"), a
+        actual=_fmt_matrix_string(
+            str(
+                [
+                    list(x)
+                    for x in [
+                        lct.lct_abscissae(8, 0.25),
+                        lct.lct_abscissae(7, 0.25),
+                        lct.lct_abscissae(8, 0.25, ishift=True),
+                        lct.lct_abscissae(7, 0.25, ishift=True),
+                        lct.lct_abscissae(20, 3 / (20 // 2)),
+                        lct.lct_abscissae(21, 3 / (21 // 2)),
+                    ]
+                ]
+            )
         ),
     )
 
 
 def test_lct_fourier():
     data_dir = pkunit.data_dir()
-    work_dir = pkunit.empty_work_dir()
     dus, all_fvals, all_uvals = _vals()
     sigs = list(zip(dus, all_fvals))
-    r = _cast_from_complex_signal(sigs, lct.lct_fourier, None)
     pkunit.file_eq(
         expect_path=data_dir.join("fourier.ndiff"),
-        actual_path=pkio.write_text(work_dir.join("fourier_actual.ndiff"), r),
+        actual=_cast_from_complex_signal(sigs, lct.lct_fourier, None),
     )
 
 
 def test_chirp_multiply():
     data_dir = pkunit.data_dir()
-    work_dir = pkunit.empty_work_dir()
     dus, all_fvals, all_uvals = _vals()
     sigs = list(zip(dus, all_fvals))
-    r = _cast_from_complex_signal(sigs, lct.chirp_multiply, _Q_CM)
     pkunit.file_eq(
         expect_path=data_dir.join("cm_signals.ndiff"),
-        actual_path=pkio.write_text(work_dir.join("cm_signals_actual.ndiff"), r),
+        actual=_cast_from_complex_signal(sigs, lct.chirp_multiply, _Q_CM),
     )
 
 
 def test_lct_decomposition():
     data_dir = pkunit.data_dir()
-    work_dir = pkunit.empty_work_dir()
     d = str([lct.lct_decomposition(m) for m in _EXAMPLE_MATRICES])
     pkunit.file_eq(
         expect_path=data_dir.join("lct_decomp.ndiff"),
-        actual_path=pkio.write_text(work_dir.join("lct_decomp_actual.ndiff"), d),
+        actual=d
     )
 
 
 def test_apply_lct():
     data_dir = pkunit.data_dir()
-    work_dir = pkunit.empty_work_dir()
     np1 = 64
     du1 = 3.0 / (np1 // 2)
     np3 = 384
@@ -121,35 +108,28 @@ def test_apply_lct():
     signal3 = [du3, _fn3(lct.lct_abscissae(np3, du3))]
     pkunit.file_eq(
         expect_path=data_dir.join("lct.ndiff"),
-        actual_path=pkio.write_text(
-            work_dir.join("lct_actual.ndiff"),
-            str(
-                _convert_signal_data(
-                    [
-                        lct.apply_lct(_EXAMPLE_MATRICES[0], signal1),
-                        lct.apply_lct(_EXAMPLE_MATRICES[0], signal1a),
-                        lct.apply_lct(_EXAMPLE_MATRICES[1], signal1),
-                        lct.apply_lct(_EXAMPLE_MATRICES[1], signal1a),
-                        lct.apply_lct(_EXAMPLE_MATRICES[1], signal3),
-                    ]
-                )
-            ),
+        actual=str(
+            _convert_signal_data(
+                [
+                    lct.apply_lct(_EXAMPLE_MATRICES[0], signal1),
+                    lct.apply_lct(_EXAMPLE_MATRICES[0], signal1a),
+                    lct.apply_lct(_EXAMPLE_MATRICES[1], signal1),
+                    lct.apply_lct(_EXAMPLE_MATRICES[1], signal1a),
+                    lct.apply_lct(_EXAMPLE_MATRICES[1], signal3),
+                ]
+            )
         ),
     )
 
 
 def test_apply_2d_sep():
     data_dir = pkunit.data_dir()
-    work_dir = pkunit.empty_work_dir()
     for case_number in (0, 1):
         i = _case(case_number, data_dir)
         r = lct.apply_lct_2d_sep(i.mx, i.my, i.signal_in)
         pkunit.file_eq(
             expect_path=data_dir.join(f"2d_sep_expect_out{case_number}.ndiff"),
-            actual_path=pkio.write_text(
-                work_dir.join(f"2d_sep_actual{case_number}.ndiff"),
-                str([r[0], r[1], [_cast_complex_for_write(number) for number in r[2]]]),
-            ),
+            actual=str([r[0], r[1], [_cast_complex_for_write(number) for number in r[2]]]),
         )
 
 

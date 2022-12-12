@@ -20,28 +20,56 @@ _EXAMPLE_MATRICES = [
 ]
 
 
+class _MultiCases:
+    def __init__(self):
+        for d in pkunit.case_dirs():
+            pkio.write_text(
+                d.join(f"{d.basename}.ndiff"),
+                getattr(self, f"_case_{d.basename}")(),
+            )
+
+    def _case_abscissae(self):
+        _lct_abscissae()
+
+    def _case_chirp(self):
+        return _cast_from_complex_signal(self._sigs(), lct.chirp_multiply, _Q_CM)
+
+    def _case_decomp(self)
+        return str([lct.lct_decomposition(m) for m in _EXAMPLE_MATRICES])
+
+    def _case_fourier(self):
+        return _cast_from_complex_signal(self._sigs(), lct.lct_fourier, None)
+
+    def _case_lct(self):
+        return _apply_lct()
+
+    def _case_scaled_signals(self):
+        return _cast_from_complex_signal(self._sigs(), lct.scale_signal, _M_SCL)
+
+    def _case_signals(self):
+        return _cast_from_complex_signal(self._sigs(), lct.resample_signal, _K_RSMP)
+
+    def _case_u_f_vals(self):
+        return _f_data(*self._vals())
+
+    def _sigs(self):
+        dus, all_fvals, all_uvals = self._vals()
+        return list(zip(dus, all_fvals))
+
+    def _vals(self):
+        dus = []
+        all_fvals = []
+        all_uvals = []
+        for i, inputs in enumerate(((3.0, 69), (5.0, 50), (8.0, 100), (8.0, 100))):
+            du, uvals, fvals = d_f_u_vals(*inputs, i)
+            dus.append(du)
+            all_fvals.append([f for f in fvals])
+            all_uvals.append([u for u in uvals])
+        return dus, all_fvals, all_uvals
+
+
 def test_multi():
-    dus, all_fvals, all_uvals = _vals()
-    sigs = list(zip(dus, all_fvals))
-    a = PKDict(
-        case_fourier=lambda: _cast_from_complex_signal(sigs, lct.lct_fourier, None),
-        case_chirp=lambda: _cast_from_complex_signal(sigs, lct.chirp_multiply, _Q_CM),
-        case_decomp=lambda: str([lct.lct_decomposition(m) for m in _EXAMPLE_MATRICES]),
-        case_signals=lambda: _cast_from_complex_signal(
-            sigs, lct.resample_signal, _K_RSMP
-        ),
-        case_scaled_signals=lambda: _cast_from_complex_signal(
-            sigs, lct.scale_signal, _M_SCL
-        ),
-        case_u_f_vals=lambda: _f_data(dus, all_uvals, all_fvals),
-        case_lct=lambda: _apply_lct(),
-        case_abscissae=lambda: _lct_abscissae(),
-    )
-    for d in pkunit.case_dirs("case"):
-        pkio.write_text(
-            d.join(f"{d.basename}.ndiff"),
-            a[d.basename](),
-        )
+    _MultiCases()
 
 
 def test_apply_2d_sep():
@@ -117,18 +145,6 @@ def _case(case_number, data_dir):
             new_arr = [complex(s) for s in arr]
             i.signal_in[2][idx] = new_arr
     return i
-
-
-def _vals():
-    dus = []
-    all_fvals = []
-    all_uvals = []
-    for i, inputs in enumerate(((3.0, 69), (5.0, 50), (8.0, 100), (8.0, 100))):
-        du, uvals, fvals = d_f_u_vals(*inputs, i)
-        dus.append(du)
-        all_fvals.append([f for f in fvals])
-        all_uvals.append([u for u in uvals])
-    return dus, all_fvals, all_uvals
 
 
 def _cast_complex_for_write(number):

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-u"""Tests for linear canonical transform functions
+"""Tests for linear canonical transform functions
 """
 from rsmath import lct
 from pykern import pkunit
@@ -20,106 +20,28 @@ _EXAMPLE_MATRICES = [
 ]
 
 
-def test_lct_signal():
-    data_dir = pkunit.data_dir()
+def test_multi():
     dus, all_fvals, all_uvals = _vals()
     sigs = list(zip(dus, all_fvals))
-    f = _fmt_matrix_string(
-        str(
-            [
-                [_cast_complex_for_write(d) for d in dus],
-                *[[_cast_complex_for_write(u) for u in uval] for uval in all_uvals],
-                *[[_cast_complex_for_write(f) for f in fval] for fval in all_fvals],
-            ]
-        )
-    )
-    s = _cast_from_complex_signal(sigs, lct.resample_signal, _K_RSMP)
-    c = _cast_from_complex_signal(sigs, lct.scale_signal, _M_SCL)
-    for case in (
-        PKDict(case="u_and_f_vals", data=f),
-        PKDict(case="signals", data=s),
-        PKDict(case="scaled_signals", data=c),
-    ):
-        pkunit.file_eq(
-            expect_path=data_dir.join(case.case + ".ndiff"),
-            actual=case.data,
-        )
-
-
-def test_lct_abscissae():
-    data_dir = pkunit.data_dir()
-    pkunit.file_eq(
-        expect_path=data_dir.join("lct_abscissae_outputs.ndiff"),
-        actual=_fmt_matrix_string(
-            str(
-                [
-                    list(x)
-                    for x in [
-                        lct.lct_abscissae(8, 0.25),
-                        lct.lct_abscissae(7, 0.25),
-                        lct.lct_abscissae(8, 0.25, ishift=True),
-                        lct.lct_abscissae(7, 0.25, ishift=True),
-                        lct.lct_abscissae(20, 3 / (20 // 2)),
-                        lct.lct_abscissae(21, 3 / (21 // 2)),
-                    ]
-                ]
-            )
+    a = PKDict(
+        case_fourier=lambda: _cast_from_complex_signal(sigs, lct.lct_fourier, None),
+        case_chirp=lambda: _cast_from_complex_signal(sigs, lct.chirp_multiply, _Q_CM),
+        case_decomp=lambda: str([lct.lct_decomposition(m) for m in _EXAMPLE_MATRICES]),
+        case_signals=lambda: _cast_from_complex_signal(
+            sigs, lct.resample_signal, _K_RSMP
         ),
-    )
-
-
-def test_lct_fourier():
-    data_dir = pkunit.data_dir()
-    dus, all_fvals, all_uvals = _vals()
-    sigs = list(zip(dus, all_fvals))
-    pkunit.file_eq(
-        expect_path=data_dir.join("fourier.ndiff"),
-        actual=_cast_from_complex_signal(sigs, lct.lct_fourier, None),
-    )
-
-
-def test_chirp_multiply():
-    data_dir = pkunit.data_dir()
-    dus, all_fvals, all_uvals = _vals()
-    sigs = list(zip(dus, all_fvals))
-    pkunit.file_eq(
-        expect_path=data_dir.join("cm_signals.ndiff"),
-        actual=_cast_from_complex_signal(sigs, lct.chirp_multiply, _Q_CM),
-    )
-
-
-def test_lct_decomposition():
-    data_dir = pkunit.data_dir()
-    d = str([lct.lct_decomposition(m) for m in _EXAMPLE_MATRICES])
-    pkunit.file_eq(
-        expect_path=data_dir.join("lct_decomp.ndiff"),
-        actual=d
-    )
-
-
-def test_apply_lct():
-    data_dir = pkunit.data_dir()
-    np1 = 64
-    du1 = 3.0 / (np1 // 2)
-    np3 = 384
-    du3 = 15.0 / (np3 // 2)
-    signal1 = [du1, _fn1(lct.lct_abscissae(np1, du1))]
-    signal1a = [du1, _fn1a(lct.lct_abscissae(np1, du1))]
-    signal3 = [du3, _fn3(lct.lct_abscissae(np3, du3))]
-    pkunit.file_eq(
-        expect_path=data_dir.join("lct.ndiff"),
-        actual=str(
-            _convert_signal_data(
-                [
-                    lct.apply_lct(_EXAMPLE_MATRICES[0], signal1),
-                    lct.apply_lct(_EXAMPLE_MATRICES[0], signal1a),
-                    lct.apply_lct(_EXAMPLE_MATRICES[1], signal1),
-                    lct.apply_lct(_EXAMPLE_MATRICES[1], signal1a),
-                    lct.apply_lct(_EXAMPLE_MATRICES[1], signal3),
-                ]
-            )
+        case_scaled_signals=lambda: _cast_from_complex_signal(
+            sigs, lct.scale_signal, _M_SCL
         ),
+        case_u_f_vals=lambda: _f_data(dus, all_uvals, all_fvals),
+        case_lct=lambda: _apply_lct(),
+        case_abscissae=lambda: _lct_abscissae(),
     )
+    for d in pkunit.case_dirs("case"):
+        pkio.write_text(
+            d.join(f"{d.basename}.ndiff"),
+            a[d.basename](),
+        )
 
 
 def test_apply_2d_sep():
@@ -129,8 +51,61 @@ def test_apply_2d_sep():
         r = lct.apply_lct_2d_sep(i.mx, i.my, i.signal_in)
         pkunit.file_eq(
             expect_path=data_dir.join(f"2d_sep_expect_out{case_number}.ndiff"),
-            actual=str([r[0], r[1], [_cast_complex_for_write(number) for number in r[2]]]),
+            actual=str(
+                [r[0], r[1], [_cast_complex_for_write(number) for number in r[2]]]
+            ),
         )
+
+
+def _apply_lct():
+    np1 = 64
+    du1 = 3.0 / (np1 // 2)
+    np3 = 384
+    du3 = 15.0 / (np3 // 2)
+    signal1 = [du1, _fn1(lct.lct_abscissae(np1, du1))]
+    signal1a = [du1, _fn1a(lct.lct_abscissae(np1, du1))]
+    signal3 = [du3, _fn3(lct.lct_abscissae(np3, du3))]
+    return str(
+        _convert_signal_data(
+            [
+                lct.apply_lct(_EXAMPLE_MATRICES[0], signal1),
+                lct.apply_lct(_EXAMPLE_MATRICES[0], signal1a),
+                lct.apply_lct(_EXAMPLE_MATRICES[1], signal1),
+                lct.apply_lct(_EXAMPLE_MATRICES[1], signal1a),
+                lct.apply_lct(_EXAMPLE_MATRICES[1], signal3),
+            ]
+        )
+    )
+
+
+def _f_data(dus, all_uvals, all_fvals):
+    return _fmt_matrix_string(
+        str(
+            [
+                [_cast_complex_for_write(d) for d in dus],
+                *[[_cast_complex_for_write(u) for u in uval] for uval in all_uvals],
+                *[[_cast_complex_for_write(f) for f in fval] for fval in all_fvals],
+            ]
+        )
+    )
+
+
+def _lct_abscissae():
+    return _fmt_matrix_string(
+        str(
+            [
+                list(x)
+                for x in [
+                    lct.lct_abscissae(8, 0.25),
+                    lct.lct_abscissae(7, 0.25),
+                    lct.lct_abscissae(8, 0.25, ishift=True),
+                    lct.lct_abscissae(7, 0.25, ishift=True),
+                    lct.lct_abscissae(20, 3 / (20 // 2)),
+                    lct.lct_abscissae(21, 3 / (21 // 2)),
+                ]
+            ]
+        )
+    )
 
 
 def _case(case_number, data_dir):

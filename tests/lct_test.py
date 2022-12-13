@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for linear canonical transform functions
+u"""Tests for linear canonical transform functions
 """
 from rsmath import lct
 from pykern import pkunit
@@ -22,53 +22,60 @@ _EXAMPLE_MATRICES = [
 
 class _MultiCases:
     def __init__(self):
-        self._values = self._vals()
-        self._signal = self._sigs()
+
+        def _sigs():
+            return list(zip(self._vals.dus, self._vals.all_fvals))
+
+        def _vals():
+            dus = []
+            all_fvals = []
+            all_uvals = []
+            for i, inputs in enumerate(((3.0, 69), (5.0, 50), (8.0, 100), (8.0, 100))):
+                du, uvals, fvals = d_f_u_vals(*inputs, i)
+                dus.append(du)
+                all_fvals.append([f for f in fvals])
+                all_uvals.append([u for u in uvals])
+            return PKDict(
+                dus=dus,
+                all_fvals=all_fvals,
+                all_uvals=all_uvals,
+            )
+
+        self._vals = _vals()
+        self._sigs = _sigs()
         for d in pkunit.case_dirs():
-            f = getattr(self, f"_case_{d.basename}")
             pkio.write_text(
                 d.join(f"{d.basename}.ndiff"),
-                f(),
+                getattr(self, f"_case_{d.basename}")(),
             )
 
     def _case_abscissae(self):
         return _lct_abscissae()
 
     def _case_chirp(self):
-        return _cast_from_complex_signal(self._signal, lct.chirp_multiply, _Q_CM)
+        return _cast_from_complex_signal(self._sigs, lct.chirp_multiply, _Q_CM)
 
     def _case_decomp(self):
         return str([lct.lct_decomposition(m) for m in _EXAMPLE_MATRICES])
 
     def _case_fourier(self):
-        return _cast_from_complex_signal(self._signal, lct.lct_fourier, None)
+        return _cast_from_complex_signal(self._sigs, lct.lct_fourier, None)
 
     def _case_lct(self):
         return _apply_lct()
 
     def _case_scaled_signals(self):
-        return _cast_from_complex_signal(self._signal, lct.scale_signal, _M_SCL)
+        return _cast_from_complex_signal(self._sigs, lct.scale_signal, _M_SCL)
 
     def _case_signals(self):
-        return _cast_from_complex_signal(self._signal, lct.resample_signal, _K_RSMP)
+        return _cast_from_complex_signal(self._sigs, lct.resample_signal, _K_RSMP)
 
     def _case_u_f(self):
-        return _f_data(*self._values)
-
-    def _sigs(self):
-        dus, all_fvals, all_uvals = self._values
-        return list(zip(dus, all_fvals))
-
-    def _vals(self):
-        dus = []
-        all_fvals = []
-        all_uvals = []
-        for i, inputs in enumerate(((3.0, 69), (5.0, 50), (8.0, 100), (8.0, 100))):
-            du, uvals, fvals = d_f_u_vals(*inputs, i)
-            dus.append(du)
-            all_fvals.append([f for f in fvals])
-            all_uvals.append([u for u in uvals])
-        return dus, all_fvals, all_uvals
+        return _f_data(
+            self._vals.dus,
+            self._vals.all_fvals,
+            self._vals.all_uvals
+        )
 
 
 def test_multi():

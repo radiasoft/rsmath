@@ -53,22 +53,22 @@ class _MultiCases:
         return _lct_abscissae()
 
     def _case_chirp(self):
-        return _cast_from_complex_signal(self._sigs, lct.chirp_multiply, _Q_CM)
+        return _signal_as_str(self._sigs, lct.chirp_multiply, _Q_CM)
 
     def _case_decomp(self):
         return str([lct.lct_decomposition(m) for m in _EXAMPLE_MATRICES])
 
     def _case_fourier(self):
-        return _cast_from_complex_signal(self._sigs, lct.lct_fourier, None)
+        return _signal_as_str(self._sigs, lct.lct_fourier, None)
 
     def _case_lct(self):
         return _apply_lct()
 
     def _case_scaled_signals(self):
-        return _cast_from_complex_signal(self._sigs, lct.scale_signal, _M_SCL)
+        return _signal_as_str(self._sigs, lct.scale_signal, _M_SCL)
 
     def _case_signals(self):
-        return _cast_from_complex_signal(self._sigs, lct.resample_signal, _K_RSMP)
+        return _signal_as_str(self._sigs, lct.resample_signal, _K_RSMP)
 
     def _case_u_f(self):
         return _f_data(
@@ -90,7 +90,7 @@ def test_apply_2d_sep():
         pkunit.file_eq(
             expect_path=data_dir.join(f"2d_sep_expect_out{case_number}.ndiff"),
             actual=str(
-                [r[0], r[1], [_cast_complex_for_write(number) for number in r[2]]]
+                [r[0], r[1], [_split_complex(number) for number in r[2]]]
             ),
         )
 
@@ -120,9 +120,9 @@ def _f_data(dus, all_fvals, all_uvals):
     return _fmt_matrix_string(
         str(
             [
-                [_cast_complex_for_write(d) for d in dus],
-                *[[_cast_complex_for_write(u) for u in uval] for uval in all_uvals],
-                *[[_cast_complex_for_write(f) for f in fval] for fval in all_fvals],
+                [_split_complex(d) for d in dus],
+                *[[_split_complex(u) for u in uval] for uval in all_uvals],
+                *[[_split_complex(f) for f in fval] for fval in all_fvals],
             ]
         )
     )
@@ -157,11 +157,11 @@ def _case(case_number, data_dir):
     return i
 
 
-def _cast_complex_for_write(number):
+def _split_complex(number):
     return (number.real, number.imag)
 
 
-def _cast_from_complex_signal(signals, signal_function, factor):
+def _signal_as_str(signals, signal_function, factor):
     if factor:
         return _convert_signal_data([signal_function(factor, sig) for sig in signals])
     return _convert_signal_data([signal_function(sig) for sig in signals])
@@ -169,7 +169,7 @@ def _cast_from_complex_signal(signals, signal_function, factor):
 
 def _convert_signal_data(signals):
     for arr in signals:
-        conv = [_cast_complex_for_write(number) for number in arr[1]]
+        conv = [_split_complex(number) for number in arr[1]]
         arr[1] = conv
     return _fmt_matrix_string(str(signals))
 

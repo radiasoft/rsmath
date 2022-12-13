@@ -25,34 +25,34 @@ class _MultiCases:
         self._values = self._vals()
         self._signal = self._sigs()
         for d in pkunit.case_dirs():
-            f = getattr(self, f"_{d.basename}")
+            f = getattr(self, f"_case_{d.basename}")
             pkio.write_text(
                 d.join(f"{d.basename}.ndiff"),
                 f(),
             )
 
-    def _abscissae(self):
+    def _case_abscissae(self):
         return _lct_abscissae()
 
-    def _chirp(self):
+    def _case_chirp(self):
         return _cast_from_complex_signal(self._signal, lct.chirp_multiply, _Q_CM)
 
-    def _decomp(self):
+    def _case_decomp(self):
         return str([lct.lct_decomposition(m) for m in _EXAMPLE_MATRICES])
 
-    def _fourier(self):
+    def _case_fourier(self):
         return _cast_from_complex_signal(self._signal, lct.lct_fourier, None)
 
-    def _lct(self):
+    def _case_lct(self):
         return _apply_lct()
 
-    def _scaled_signals(self):
+    def _case_scaled_signals(self):
         return _cast_from_complex_signal(self._signal, lct.scale_signal, _M_SCL)
 
-    def _signals(self):
+    def _case_signals(self):
         return _cast_from_complex_signal(self._signal, lct.resample_signal, _K_RSMP)
 
-    def _u_f(self):
+    def _case_u_f(self):
         return _f_data(*self._values)
 
     def _sigs(self):

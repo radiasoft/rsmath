@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
-u"""Tests for linear canonical transform functions
+"""Tests for linear canonical transform functions
+
+:copyright: Copyright (c) 2019 RadiaSoft LLC.  All Rights Reserved.
+:license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 from rsmath import lct
 from pykern import pkunit
 from pykern.pkcollections import PKDict
-from pykern import pksubprocess
 from pykern import pkio
 import numpy as np
-import re
 
 
 _K_RSMP = 2.0

@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
-u"""Tests for linear canonical transform functions
+"""Tests for linear canonical transform functions
+
+:copyright: Copyright (c) 2019 RadiaSoft LLC.  All Rights Reserved.
+:license: http://www.apache.org/licenses/LICENSE-2.0.html
 """
 from rsmath import lct
 from pykern import pkunit
 from pykern.pkcollections import PKDict
-from pykern import pksubprocess
 from pykern import pkio
 import numpy as np
-import re
 
 
 _K_RSMP = 2.0
@@ -20,39 +21,116 @@ _EXAMPLE_MATRICES = [
 ]
 
 
-def test_lct_signal():
+class _MultiCases:
+    def __init__(self):
+
+        def _sigs():
+            return list(zip(self._vals.dus, self._vals.all_fvals))
+
+        def _vals():
+            dus = []
+            all_fvals = []
+            all_uvals = []
+            for i, inputs in enumerate(((3.0, 69), (5.0, 50), (8.0, 100), (8.0, 100))):
+                du, uvals, fvals = d_f_u_vals(*inputs, i)
+                dus.append(du)
+                all_fvals.append([f for f in fvals])
+                all_uvals.append([u for u in uvals])
+            return PKDict(
+                dus=dus,
+                all_fvals=all_fvals,
+                all_uvals=all_uvals,
+            )
+
+        self._vals = _vals()
+        self._sigs = _sigs()
+        for d in pkunit.case_dirs():
+            pkio.write_text(
+                d.join(f"{d.basename}.ndiff"),
+                getattr(self, f"_case_{d.basename}")(),
+            )
+
+    def _case_abscissae(self):
+        return _lct_abscissae()
+
+    def _case_chirp(self):
+        return _signal_as_str(self._sigs, lct.chirp_multiply, _Q_CM)
+
+    def _case_decomp(self):
+        return str([lct.lct_decomposition(m) for m in _EXAMPLE_MATRICES])
+
+    def _case_fourier(self):
+        return _signal_as_str(self._sigs, lct.lct_fourier, None)
+
+    def _case_lct(self):
+        return _apply_lct()
+
+    def _case_scaled_signals(self):
+        return _signal_as_str(self._sigs, lct.scale_signal, _M_SCL)
+
+    def _case_signals(self):
+        return _signal_as_str(self._sigs, lct.resample_signal, _K_RSMP)
+
+    def _case_u_f(self):
+        return _f_data(
+            self._vals.dus,
+            self._vals.all_fvals,
+            self._vals.all_uvals
+        )
+
+
+def test_multi():
+    _MultiCases()
+
+
+def test_apply_2d_sep():
     data_dir = pkunit.data_dir()
-    work_dir = pkunit.empty_work_dir()
-    dus, all_fvals, all_uvals = _vals()
-    sigs = list(zip(dus, all_fvals))
-    f = _fmt_matrix_string(
-        str(
+    for case_number in (0, 1):
+        i = _case(case_number, data_dir)
+        r = lct.apply_lct_2d_sep(i.mx, i.my, i.signal_in)
+        pkunit.file_eq(
+            expect_path=data_dir.join(f"2d_sep_expect_out{case_number}.ndiff"),
+            actual=str(
+                [r[0], r[1], [_split_complex(number) for number in r[2]]]
+            ),
+        )
+
+
+def _apply_lct():
+    np1 = 64
+    du1 = 3.0 / (np1 // 2)
+    np3 = 384
+    du3 = 15.0 / (np3 // 2)
+    signal1 = [du1, _fn1(lct.lct_abscissae(np1, du1))]
+    signal1a = [du1, _fn1a(lct.lct_abscissae(np1, du1))]
+    signal3 = [du3, _fn3(lct.lct_abscissae(np3, du3))]
+    return str(
+        _convert_signal_data(
             [
-                [_cast_complex_for_write(d) for d in dus],
-                *[[_cast_complex_for_write(u) for u in uval] for uval in all_uvals],
-                *[[_cast_complex_for_write(f) for f in fval] for fval in all_fvals],
+                lct.apply_lct(_EXAMPLE_MATRICES[0], signal1),
+                lct.apply_lct(_EXAMPLE_MATRICES[0], signal1a),
+                lct.apply_lct(_EXAMPLE_MATRICES[1], signal1),
+                lct.apply_lct(_EXAMPLE_MATRICES[1], signal1a),
+                lct.apply_lct(_EXAMPLE_MATRICES[1], signal3),
             ]
         )
     )
-    s = _cast_from_complex_signal(sigs, lct.resample_signal, _K_RSMP)
-    c = _cast_from_complex_signal(sigs, lct.scale_signal, _M_SCL)
-    for case in (
-        PKDict(case="u_and_f_vals", data=f),
-        PKDict(case="signals", data=s),
-        PKDict(case="scaled_signals", data=c),
-    ):
-        _ndiff_files(
-            data_dir.join(case.case + ".txt"),
-            pkio.write_text(work_dir.join(case.case + "_actual.txt"), case.data),
-            work_dir.join("ndiff.out"),
-            data_dir,
+
+
+def _f_data(dus, all_fvals, all_uvals):
+    return _fmt_matrix_string(
+        str(
+            [
+                [_split_complex(d) for d in dus],
+                *[[_split_complex(u) for u in uval] for uval in all_uvals],
+                *[[_split_complex(f) for f in fval] for fval in all_fvals],
+            ]
         )
+    )
 
 
-def test_lct_abscissae():
-    data_dir = pkunit.data_dir()
-    work_dir = pkunit.empty_work_dir()
-    a = _fmt_matrix_string(
+def _lct_abscissae():
+    return _fmt_matrix_string(
         str(
             [
                 list(x)
@@ -67,100 +145,6 @@ def test_lct_abscissae():
             ]
         )
     )
-    _ndiff_files(
-        data_dir.join("lct_abscissae_outputs.txt"),
-        pkio.write_text(work_dir.join("lct_abscissae_outputs_actual.txt"), a),
-        work_dir.join("ndiff.out"),
-        data_dir,
-    )
-
-
-def test_lct_fourier():
-    data_dir = pkunit.data_dir()
-    work_dir = pkunit.empty_work_dir()
-    dus, all_fvals, all_uvals = _vals()
-    sigs = list(zip(dus, all_fvals))
-    r = _cast_from_complex_signal(sigs, lct.lct_fourier, None)
-    _ndiff_files(
-        data_dir.join("fourier.txt"),
-        pkio.write_text(work_dir.join("fourier_actual.txt"), r),
-        work_dir.join("ndiff.out"),
-        data_dir,
-    )
-
-
-def test_chirp_multiply():
-    data_dir = pkunit.data_dir()
-    work_dir = pkunit.empty_work_dir()
-    dus, all_fvals, all_uvals = _vals()
-    sigs = list(zip(dus, all_fvals))
-    r = _cast_from_complex_signal(sigs, lct.chirp_multiply, _Q_CM)
-    _ndiff_files(
-        data_dir.join("cm_signals.txt"),
-        pkio.write_text(work_dir.join("cm_signals_actual.txt"), r),
-        work_dir.join("ndiff.out"),
-        data_dir,
-    )
-
-
-def test_lct_decomposition():
-    data_dir = pkunit.data_dir()
-    work_dir = pkunit.empty_work_dir()
-    d = str([lct.lct_decomposition(m) for m in _EXAMPLE_MATRICES])
-    _ndiff_files(
-        data_dir.join("lct_decomp.txt"),
-        pkio.write_text(work_dir.join("lct_decomp_actual.txt"), d),
-        work_dir.join("ndiff.out"),
-        data_dir,
-    )
-
-
-def test_apply_lct():
-    data_dir = pkunit.data_dir()
-    work_dir = pkunit.empty_work_dir()
-    np1 = 64
-    du1 = 3.0 / (np1 // 2)
-    np3 = 384
-    du3 = 15. / (np3 // 2)
-    signal1 = [du1, _fn1(lct.lct_abscissae(np1, du1))]
-    signal1a = [du1, _fn1a(lct.lct_abscissae(np1, du1))]
-    signal3 = [du3, _fn3(lct.lct_abscissae(np3, du3))]
-    _ndiff_files(
-        data_dir.join("lct.txt"),
-        pkio.write_text(
-            work_dir.join("lct_actual.txt"),
-            str(
-                _convert_signal_data(
-                    [
-                        lct.apply_lct(_EXAMPLE_MATRICES[0], signal1),
-                        lct.apply_lct(_EXAMPLE_MATRICES[0], signal1a),
-                        lct.apply_lct(_EXAMPLE_MATRICES[1], signal1),
-                        lct.apply_lct(_EXAMPLE_MATRICES[1], signal1a),
-                        lct.apply_lct(_EXAMPLE_MATRICES[1], signal3),
-                    ]
-                )
-            ),
-        ),
-        work_dir.join("ndiff.out"),
-        data_dir,
-    )
-
-
-def test_apply_2d_sep():
-    data_dir = pkunit.data_dir()
-    work_dir = pkunit.empty_work_dir()
-    for case_number in (0, 1):
-        i = _case(case_number, data_dir)
-        r = lct.apply_lct_2d_sep(i.mx, i.my, i.signal_in)
-        _ndiff_files(
-            data_dir.join(f"2d_sep_expect_out{case_number}.txt"),
-            pkio.write_text(
-                work_dir.join(f"2d_sep_actual{case_number}.txt"),
-                str([r[0], r[1], [_cast_complex_for_write(number) for number in r[2]]])
-            ),
-            work_dir.join("ndiff.out"),
-            data_dir,
-        )
 
 
 def _case(case_number, data_dir):
@@ -174,39 +158,11 @@ def _case(case_number, data_dir):
     return i
 
 
-def _vals():
-    dus = []
-    all_fvals = []
-    all_uvals = []
-    for i, inputs in enumerate(((3.0, 69), (5.0, 50), (8.0, 100), (8.0, 100))):
-        du, uvals, fvals = d_f_u_vals(*inputs, i)
-        dus.append(du)
-        all_fvals.append([f for f in fvals])
-        all_uvals.append([u for u in uvals])
-    return dus, all_fvals, all_uvals
-
-
-def _ndiff_files(expect_path, actual_path, diff_file, data_dir):
-    pksubprocess.check_call_with_signals(
-        [
-            "ndiff",
-            actual_path,
-            expect_path,
-            data_dir.join("ndiff_conf.txt"),
-        ],
-        output=str(diff_file),
-    )
-
-    d = pkio.read_text(diff_file)
-    if re.search("diffs have been detected", d):
-        raise AssertionError(f"{d}")
-
-
-def _cast_complex_for_write(number):
+def _split_complex(number):
     return (number.real, number.imag)
 
 
-def _cast_from_complex_signal(signals, signal_function, factor):
+def _signal_as_str(signals, signal_function, factor):
     if factor:
         return _convert_signal_data([signal_function(factor, sig) for sig in signals])
     return _convert_signal_data([signal_function(sig) for sig in signals])
@@ -214,7 +170,7 @@ def _cast_from_complex_signal(signals, signal_function, factor):
 
 def _convert_signal_data(signals):
     for arr in signals:
-        conv = [_cast_complex_for_write(number) for number in arr[1]]
+        conv = [_split_complex(number) for number in arr[1]]
         arr[1] = conv
     return _fmt_matrix_string(str(signals))
 

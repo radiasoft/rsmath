@@ -189,14 +189,14 @@ def lct_decomposition(M_lct):
     simpler transforms for which fast [i.e., ~O(N log N)] algorithms exist.
     The transforms required here are scaling (SCL), chirp multiplication (CM),
     and the Fourier transform (FT). In addition, we must sometimes resample
-    the data (SMPL) so as to maintain a time-bandwidh product sufficient to
+    the data (RSMP) so as to maintain a time-bandwidh product sufficient to
     recover the original signal.
 
- ** DTA: Must we handle separately the case B = M_lct[1,2] = 0?
-         What about the case |B| << 1?
+    The decompositions used here, except that used for B = 0, comes from the
+    work of Koç, et al., in _IEEE Trans. Signal Proc._ 56(6):2383--2394, June
+    2008.
 
-    The decompositions used here comes from the work of Koç, et al.,
-    in _IEEE Trans. Signal Proc._ 56(6):2383--2394, June 2008.
+ ** DTA: What about the case |B| << 1?
 
     Argument:
     M_lct -- symplectic 2x2 matrix that describes the desired LCT
@@ -206,6 +206,14 @@ def lct_decomposition(M_lct):
     where 'STR' specifies the operation, and p the parameter relevant
     for that operation.
     """
+    a, b, c, d = np.asarray(M_lct).flatten()
+    if b == 0.:
+        k = 1. + abs(a * c)
+        seq = [ [ 'SCL',     a   ],
+                ['RSMP',     k   ],
+                [  'CM', - c / a ] ]
+        return seq
+
     alpha, beta, gamma = _convert_params_4to3(M_lct)
     ag = abs(gamma)
     if ag <= 1:

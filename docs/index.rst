@@ -3,6 +3,10 @@ Welcome to rsmath
 
 A library for common mathematical functions and constants
 
+.. autosummary::
+   :toctree: _autosummary
+   :recursive:
+
 .. toctree::
    :maxdepth: 2
 

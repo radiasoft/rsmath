@@ -2,12 +2,12 @@
 
 A library for common mathematical functions and constants
 
-Learn more at https://github.com/radiasoft/rsmath.
+Learn more at https://git.radiasoft.org/rsmath.
 
-Documentation: http://rsmath.readthedocs.org/en/latest/
+Documentation: https://rsmath.readthedocs.io
 
 #### License
 
-License: http://www.apache.org/licenses/LICENSE-2.0.html
+License: https://www.apache.org/licenses/LICENSE-2.0.html
 
-Copyright (c) 2022 RadiaSoft LLC.  All Rights Reserved.
+Copyright (c) 2025 RadiaSoft LLC.  All Rights Reserved.
